@@ -4,15 +4,13 @@ import pickle
 import ANN
 import matplotlib.pyplot
 
-f = open("dataset_features.pkl", "rb")
-data_inputs2 = pickle.load(f)
-f.close()
-features_STDs = numpy.std(a=data_inputs2, axis=0)
-data_inputs = data_inputs2[:, features_STDs>50]
 
-f = open("outputs.pkl", "rb")
-data_outputs = pickle.load(f)
-f.close()
+data_inputs = numpy.load('/home/harsha/Deep Learning/Classification Of Leukocytes/Image_Classification/Numpy Files/x.npy')
+data_inputs = numpy.reshape(data_inputs,(1691,2500))
+print(data_inputs.shape)
+
+data_outputs = numpy.load('/home/harsha/Deep Learning/Classification Of Leukocytes/Image_Classification/Numpy Files/y.npy')
+print(data_outputs.shape)
 
 """
 Genetic algorithm parameters:
@@ -24,24 +22,24 @@ Genetic algorithm parameters:
 
 sol_per_pop = 8
 num_parents_mating = 4
-num_generations = 1000
+num_generations = 100
 mutation_percent = 10
 
 #Creating the initial population.
 initial_pop_weights = []
 for curr_sol in numpy.arange(0, sol_per_pop):
     HL1_neurons = 150
-    input_HL1_weights = numpy.random.uniform(low=-0.1, high=0.1, 
+    input_HL1_weights = numpy.random.uniform(low=-0.1, high=0.1,
                                              size=(data_inputs.shape[1], HL1_neurons))
     HL2_neurons = 60
-    HL1_HL2_weights = numpy.random.uniform(low=-0.1, high=0.1, 
+    HL1_HL2_weights = numpy.random.uniform(low=-0.1, high=0.1,
                                              size=(HL1_neurons, HL2_neurons))
-    output_neurons = 4
-    HL2_output_weights = numpy.random.uniform(low=-0.1, high=0.1, 
+    output_neurons = 5
+    HL2_output_weights = numpy.random.uniform(low=-0.1, high=0.1,
                                               size=(HL2_neurons, output_neurons))
 
-    initial_pop_weights.append(numpy.array([input_HL1_weights, 
-                                                HL1_HL2_weights, 
+    initial_pop_weights.append(numpy.array([input_HL1_weights,
+                                                HL1_HL2_weights,
                                                 HL2_output_weights]))
 
 pop_weights_mat = numpy.array(initial_pop_weights)
@@ -54,21 +52,21 @@ for generation in range(num_generations):
     print("Generation : ", generation)
 
     # converting the solutions from being vectors to matrices.
-    pop_weights_mat = ga.vector_to_mat(pop_weights_vector, 
+    pop_weights_mat = ga.vector_to_mat(pop_weights_vector,
                                        pop_weights_mat)
 
     # Measuring the fitness of each chromosome in the population.
-    fitness = ANN.fitness(pop_weights_mat, 
-                          data_inputs, 
-                          data_outputs, 
-                          activation="sigmoid")
+    fitness = ANN.fitness(pop_weights_mat,
+                          data_inputs,
+                          data_outputs,
+                          activation="swish")
     accuracies[generation] = fitness[0]
     print("Fitness")
     print(fitness)
 
     # Selecting the best parents in the population for mating.
-    parents = ga.select_mating_pool(pop_weights_vector, 
-                                    fitness.copy(), 
+    parents = ga.select_mating_pool(pop_weights_vector,
+                                    fitness.copy(),
                                     num_parents_mating)
     print("Parents")
     print(parents)
@@ -80,7 +78,7 @@ for generation in range(num_generations):
     print(offspring_crossover)
 
     # Adding some variations to the offsrping using mutation.
-    offspring_mutation = ga.mutation(offspring_crossover, 
+    offspring_mutation = ga.mutation(offspring_crossover,
                                      mutation_percent=mutation_percent)
     print("Mutation")
     print(offspring_mutation)
@@ -99,6 +97,7 @@ matplotlib.pyplot.xlabel("Iteration", fontsize=20)
 matplotlib.pyplot.ylabel("Fitness", fontsize=20)
 matplotlib.pyplot.xticks(numpy.arange(0, num_generations+1, 100), fontsize=15)
 matplotlib.pyplot.yticks(numpy.arange(0, 101, 5), fontsize=15)
+matplotlib.pyplot.show()
 
 f = open("weights_"+str(num_generations)+"_iterations_"+str(mutation_percent)+"%_mutation.pkl", "wb")
 pickle.dump(pop_weights_mat, f)
